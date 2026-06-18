@@ -1,47 +1,36 @@
-# TradeX
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-TradeX is a modern full-stack trading platform built with Next.js, TypeScript, MongoDB, and Auth.js. The project focuses on providing a secure and scalable trading experience with robust authentication, email verification, protected routes, and a responsive user interface.
+## Getting Started
 
-## Features
+First, run the development server:
 
-### Authentication & Security
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
 
-* User Registration
-* Email Verification via OTP
-* Secure Login with Auth.js Credentials Provider
-* Password Hashing using bcrypt
-* JWT-based Sessions
-* Protected Routes with Middleware
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-### User Experience
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-* Dark & Light Theme Support
-* Responsive Design
-* Form Validation using Zod
-* Toast Notifications
-* Modern UI built with shadcn/ui
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-### Tech Stack
+## Learn More
 
-* Next.js 15
-* TypeScript
-* MongoDB
-* Mongoose
-* Auth.js (NextAuth v5)
-* Tailwind CSS
-* shadcn/ui
-* React Hook Form
-* Zod
-* Nodemailer
-* bcryptjs
+To learn more about Next.js, take a look at the following resources:
 
-## Upcoming Features
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-* Trading Dashboard
-* Portfolio Management
-* Watchlist System
-* Transaction History
-* Market Data Integration
-* Analytics & Performance Tracking
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-This project is being developed as a production-grade full-stack application to demonstrate modern web development practices and scalable architecture.
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
