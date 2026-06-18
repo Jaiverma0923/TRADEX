@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
         token &&
         (
             url.pathname.startsWith('/login') ||
-            url.pathname.startsWith('/signup') ||
+            url.pathname.startsWith('/signUp') ||
             url.pathname.startsWith('/verify')
         )
     ) {
