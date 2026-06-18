@@ -5,17 +5,19 @@ import { ThemeToggle } from "./ui/theme-toggle";
 import { Input } from "./ui/input";
 import { Menu } from "lucide-react";
 import { useSession } from "next-auth/react";
-
+import { useSearch } from "../context/searchContext";
 interface NavbarProps {
   setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
+
 }
 
 export default function Navbar({ setSidebarOpen }: NavbarProps) {
+  const {query,setQuery}=useSearch();
   const pathname = usePathname();
   const { data: session } = useSession();
   const initials = session?.user?.name
     ?.split(" ")
-    .map((word : string) => word[0])
+    .map((word: string) => word[0])
     .join("")
     .toUpperCase();
   const titleMap: Record<string, string> = {
@@ -29,9 +31,8 @@ export default function Navbar({ setSidebarOpen }: NavbarProps) {
   const title = titleMap[pathname] || "TradeX";
 
   return (
-    <header className="h-16 border-b bg-background px-6 flex items-center justify-between">
+    <header className="h-16 border-b bg-background px-6 flex items-center">
       {/* Left */}
-
       <div className="flex items-center gap-3">
         <button
           onClick={() => setSidebarOpen(prev => !prev)}
@@ -39,18 +40,26 @@ export default function Navbar({ setSidebarOpen }: NavbarProps) {
         >
           <Menu className="h-5 w-5" />
         </button>
+
         <h1 className="text-xl font-semibold">
           {title}
         </h1>
       </div>
 
+      {/* Center */}
+      <div className="flex-1 flex justify-center ">
+        {pathname === "/dashboard" && (
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search stocks..."
+            className="max-w-md"
+          />
+        )}
+      </div>
+
       {/* Right */}
       <div className="flex items-center gap-4">
-        <Input
-          placeholder="Search stocks..."
-          className="w-64"
-        />
-
         <ThemeToggle />
 
         <div className="h-10 w-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-lg ring-2 ring-background">

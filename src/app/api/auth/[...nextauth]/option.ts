@@ -36,7 +36,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 const isPasswordCorrect = await bcrypt.compare(password, user.password);
                 if (isPasswordCorrect) {
                     return {
-                        id: user._id.toString(),
+                        _id: user._id.toString(),
                         email: user.email,
                         name: user.name,
                     };
@@ -50,14 +50,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     callbacks:{
         async jwt({ token, user }) {
             if(user){
-                token.id=user.id?.toString();
+                token._id=user._id?.toString();
                 token.name=user.name;
             }
             return token;
         },
         async session({ session, token }) {
             if(token){
-                session.user.id=token.id;
+                session.user._id=token._id;
                 session.user.name=token.name;
             }
             return session;
