@@ -6,13 +6,17 @@ import { Input } from "./ui/input";
 import { Menu } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useSearch } from "../context/searchContext";
+import { useDebounceCallback } from 'usehooks-ts'
+import { useState } from "react";
 interface NavbarProps {
   setSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
 
 }
 
 export default function Navbar({ setSidebarOpen }: NavbarProps) {
-  const {query,setQuery}=useSearch();
+  const {setQuery}=useSearch();
+  const [searchInput, setSearchInput] = useState("");
+  const debounced = useDebounceCallback(setQuery, 300)
   const pathname = usePathname();
   const { data: session } = useSession();
   const initials = session?.user?.name
@@ -50,8 +54,10 @@ export default function Navbar({ setSidebarOpen }: NavbarProps) {
       <div className="flex-1 flex justify-center ">
         {pathname === "/dashboard" && (
           <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={searchInput}
+            onChange={(e) => {
+              setSearchInput(e.target.value)
+              debounced(e.target.value)}}
             placeholder="Search stocks..."
             className="max-w-md"
           />

@@ -14,6 +14,7 @@ type Stock = {
 function Page() {
   const { query } = useSearch();
   const [results, setResults] = useState<Stock[]>([]);
+
   useEffect(() => {
     const searchStocks = async () => {
       if (!query.trim()) {
@@ -46,9 +47,15 @@ function Page() {
   return (
     <div className="max-w-5xl mx-auto p-6">
       {results.length > 0 && (
-        <h2 className="text-lg font-semibold mb-4">
-          Search Results
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+  <h2 className="text-lg font-semibold">
+    Search Results
+  </h2>
+
+  <span className="text-sm text-muted-foreground">
+    {results.length} found
+  </span>
+</div>
       )}
 
       {query.trim() && (
@@ -77,15 +84,26 @@ function Page() {
               </div>
 
               <Button
-                onClick={() => handleClick(stock)}
-                variant="outline"
-                className="rounded-xl px-5 hover:bg-cyan-500 hover:text-black transition-all"
-              >
-                Add
-              </Button>
+  onClick={() => handleClick(stock)}
+  variant="outline"
+  className="rounded-xl px-5 hover:bg-cyan-500 hover:text-black transition-all"
+>
+  + Watchlist
+</Button>
             </div>
           ))}
         </div>)}
+        {query.trim() && results.length === 0 && (
+  <div className="flex flex-col items-center justify-center py-16">
+    <h3 className="text-lg font-semibold">
+      No stocks found
+    </h3>
+
+    <p className="text-muted-foreground text-sm mt-1">
+      Try searching with a different symbol or company name
+    </p>
+  </div>
+)}
     </div>
   )
 }
