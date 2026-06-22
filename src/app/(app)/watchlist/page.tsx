@@ -27,14 +27,19 @@ function Page() {
   }
   const handleClick = async (data: stock) => {
     setLoadingSymbol(data.symbol);
+    const previousStocks = stocks;
+
+    setStocks((prev) =>
+      prev.filter((s) => s.symbol !== data.symbol)
+    );
     try {
       const response = await axios.post('/api/watchlist', {
         symbol: data.symbol,
         companyName: data.companyName,
       })
       toast.success(response.data.action)
-      await fetchWatchlist()
     } catch (error) {
+      setStocks(previousStocks);
       const axiosError = error as AxiosError<ApiResponse>
       toast.error("something went wrong", {
         description: axiosError.response?.data.message

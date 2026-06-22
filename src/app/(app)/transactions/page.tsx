@@ -93,6 +93,7 @@ export default function Page() {
     form.setValue("symbol", stock.symbol, { shouldValidate: true })
     form.setValue("companyName", stock.companyName, { shouldValidate: true })
     setQuery(stock.symbol)
+    setSearchInput(stock.symbol);
     setResults([])
     setDropdownOpen(false)
     setIsSelected(true)
@@ -184,6 +185,7 @@ export default function Page() {
                     form.setValue("companyName", "")
                     setQuery("")
                     setIsSelected(false)
+                    setSearchInput("");
                   }}
                   className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
