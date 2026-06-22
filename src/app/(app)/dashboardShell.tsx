@@ -14,13 +14,13 @@ export default function DashboardShell({
     const [sidebarOpen, setSidebarOpen] = useState(true);
     return (
         <SearchProvider>
-            <div className="flex min-h-screen">
+            <div className="flex h-screen overflow-hidden">
                 <Sidebar open={sidebarOpen} />
-                <div className="flex flex-col flex-1">
+                <div className="flex flex-col flex-1 overflow-hidden">
                     <Navbar
                         setSidebarOpen={setSidebarOpen}
                     />
-                    <main className="flex-1">
+                    <main className="flex-1 overflow-y-auto">
                         {children}
                     </main>
                 </div>
