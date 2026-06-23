@@ -4,7 +4,7 @@ A full-stack stock portfolio management platform that helps investors track hold
 
 ### 🌐 Live Demo
 
-https://tradex-peach-nu.vercel.app/
+https://tradex-26.vercel.app/
 
 ---
 
