@@ -238,7 +238,7 @@ export default function Page() {
       {hasQuery && (
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-[15px] font-medium">
-            Results for <span className="text-muted-foreground">"{query.trim()}"</span>
+            Results for <span className="text-muted-foreground">`&quot;`{query.trim()}`&quot;`</span>
           </h2>
           {results.length > 0 && (
             <span className="text-xs text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-full">
