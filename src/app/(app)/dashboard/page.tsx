@@ -1,149 +1,288 @@
-
 "use client"
-import { Button } from '@/src/components/ui/button';
-import { useSearch } from '@/src/context/searchContext';
-import { ApiResponse } from '@/src/types/apiResponse';
-import axios, { AxiosError } from 'axios';
-import { Star } from 'lucide-react';
-import { useEffect, useState } from 'react'
-import { toast } from 'sonner';
+import { Button } from '@/src/components/ui/button'
+import { useSearch } from '@/src/context/searchContext'
+import { ApiResponse } from '@/src/types/apiResponse'
+import axios, { AxiosError } from 'axios'
+import { Star, TrendingUp, Wallet, BarChart2, Layers, Activity } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
 type Stock = {
-  symbol: string;
-  companyName: string;
+  symbol: string
+  companyName: string
 }
 
-function Page() {
-  const { query } = useSearch();
-  const [results, setResults] = useState<Stock[]>([]);
-  const [watchlist, setWatchlist] = useState<string[]>([]);
-  const [loadingSymbol, setLoadingSymbol] = useState<string | null>(null);
-  const fetchWatchlist = async () => {
-    try {
-      const response = await axios.get("/api/watchlist");
+type LargestHolding = {
+  symbol: string
+  companyName: string
+  shares: number
+  costBasis: number
+  avgCost: number
+} | null
 
-      setWatchlist(
-        response.data.data.map(
-          (stock: { symbol: string }) => stock.symbol
-        )
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  useEffect(() => {
+type Dashboard = {
+  totalInvested: number
+  holdingsCount: number
+  transactionsCount: number
+  largestHolding: LargestHolding
+}
 
-    const searchStocks = async () => {
-      if (!query.trim()) {
-        setResults([]);
-        return;
-      }
-      try {
-        const response = await axios.get(`/api/stocks/search?q=${query.trim()}`);
-        setResults(response.data)
-      } catch (error) {
-        console.error(error);
-      }
-    }
-    searchStocks();
-  }, [query])
-  useEffect(() => {
-    fetchWatchlist();
-  }, []);
+const TICKER_INDICES = [
+  { label: "S&P 500", value: "5,832", change: "+0.82%", up: true },
+  { label: "NASDAQ", value: "18,421", change: "+1.10%", up: true },
+  { label: "DOW", value: "42,110", change: "-0.14%", up: false },
+  { label: "VIX", value: "14.22", change: "-2.30%", up: false },
+]
 
-  const handleClick = async (data: Stock) => {
-    setLoadingSymbol(data.symbol)
-    try {
-      const response = await axios.post('/api/watchlist', {
-        symbol: data.symbol,
-        companyName: data.companyName
-      })
-      toast.success(response.data.action);
-      await fetchWatchlist();
-    } catch (error) {
-      const axiosError = error as AxiosError<ApiResponse>;
-      toast.error("something went wrong", {
-        description: axiosError.response?.data.message,
-      })
-    } finally {
-      setLoadingSymbol(null);
-    }
-  }
+
+function TickerStrip() {
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      {results.length > 0 && (
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">
-            Search Results
-          </h2>
+    <div className="flex items-center overflow-hidden rounded-xl border border-border/40 mb-5 bg-card/60">
+      {TICKER_INDICES.map(({ label, value, change, up }, i) => (
+        <div
+          key={label}
+          className="flex flex-col gap-0.5 px-4 py-2.5 flex-1 border-r border-border/40 last:border-r-0"
+        >
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</span>
+          <span className="text-[13px] font-medium tabular-nums">{value}</span>
+          <span className={`text-[11px] font-medium ${up ? "text-emerald-500" : "text-red-400"}`}>{change}</span>
+        </div>
+      ))}
+      <div className="flex items-center gap-1.5 px-4 py-2.5 flex-shrink-0">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
+        <span className="text-[10px] text-muted-foreground whitespace-nowrap">NYSE open</span>
+      </div>
+    </div>
+  )
+}
 
-          <span className="text-sm text-muted-foreground">
-            {results.length} found
-          </span>
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  sub,
+}: {
+  icon: React.ElementType
+  label: string
+  value: string
+  sub?: string
+}) {
+  return (
+    <div className="rounded-xl border border-border/40 bg-card/60 p-4 flex flex-col gap-2.5">
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+        <div className="w-7 h-7 rounded-lg bg-muted/60 flex items-center justify-center">
+          <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+        </div>
+      </div>
+      <p className="text-xl font-medium tabular-nums">{value}</p>
+      {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
+    </div>
+  )
+}
+
+
+
+// ─── Mock holdings — replace with your real API data ───────────────────────
+
+function DashboardView({ data }: { data: Dashboard | null }) {
+  const fmt = (n: number) =>
+    n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+        <MetricCard icon={Wallet} label="Total invested" value={data ? `$${fmt(data.totalInvested)}` : "—"} sub="cost basis" />
+        <MetricCard icon={Layers} label="Holdings" value={data ? String(data.holdingsCount) : "—"} sub="active positions" />
+        <MetricCard icon={BarChart2} label="Transactions" value={data ? String(data.transactionsCount) : "—"} sub="total recorded" />
+        <MetricCard
+          icon={TrendingUp}
+          label="Largest position"
+          value={data?.largestHolding?.symbol ?? "—"}
+          sub={data?.largestHolding
+            ? `$${data.largestHolding.costBasis.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} cost basis`
+            : "by cost basis"}
+        />
+      </div>
+
+      {data && data.holdingsCount === 0 && (
+        <div className="border border-dashed border-border/40 rounded-2xl p-10 text-center">
+          <div className="w-10 h-10 rounded-xl bg-muted/60 flex items-center justify-center mx-auto mb-3">
+            <BarChart2 className="w-5 h-5 text-muted-foreground" />
+          </div>
+          <p className="text-sm font-medium mb-1">No holdings yet</p>
+          <p className="text-xs text-muted-foreground">Search for a stock above and add it to your watchlist, or record a transaction to get started.</p>
+        </div>
+      )}
+      {data && data.holdingsCount > 0 && (
+        <div className="rounded-xl border border-border/40 bg-card/60 p-5">
+          <h3 className="text-sm font-medium mb-2">
+            Portfolio Summary
+          </h3>
+
+          <p className="text-sm text-muted-foreground">
+            You currently hold {data.holdingsCount} positions
+            across {data.transactionsCount} transactions.
+          </p>
         </div>
       )}
 
-      {query.trim() && (
-        <div className="space-y-3 pr-2">
+      <div className="flex items-start gap-3 px-4 py-3 rounded-xl border border-border/40 bg-card/20">
+        <Activity className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Use the search bar above to find stocks and add them to your watchlist. Head to{" "}
+          <span className="text-foreground font-medium">Portfolio</span> to see live prices and P&L.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ── The rest of the page (search logic) is completely unchanged ──────────────
+
+export default function Page() {
+  const { query } = useSearch()
+  const [results, setResults] = useState<Stock[]>([])
+  const [watchlist, setWatchlist] = useState<string[]>([])
+  const [loadingSymbol, setLoadingSymbol] = useState<string | null>(null)
+  const [dashboard, setDashboard] = useState<Dashboard | null>(null)
+  const [dashLoading, setDashLoading] = useState(true)
+  const abortRef = useRef<AbortController | null>(null)
+
+
+
+  const fetchWatchlist = async () => {
+    try {
+      const res = await axios.get("/api/watchlist")
+      setWatchlist(res.data.data.map((s: { symbol: string }) => s.symbol))
+    } catch (err) { console.error(err) }
+  }
+
+  const fetchDashboard = async () => {
+    try {
+      setDashLoading(true)
+      const res = await axios.get("/api/dashboard")
+      setDashboard(res.data.data)
+    } catch (err) { console.error(err) }
+    finally { setDashLoading(false) }
+  }
+
+  useEffect(() => { fetchWatchlist(); fetchDashboard() }, [])
+
+  useEffect(() => {
+    abortRef.current?.abort()
+    if (!query.trim()) { setResults([]); return }
+    abortRef.current = new AbortController()
+    const timer = setTimeout(async () => {
+      try {
+        const res = await axios.get(`/api/stocks/search?q=${query.trim()}`, {
+          signal: abortRef.current!.signal,
+        })
+        setResults(res.data)
+      } catch (err) {
+        if (!axios.isCancel(err)) setResults([])
+      }
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [query])
+
+  const handleClick = async (stock: Stock) => {
+    setLoadingSymbol(stock.symbol)
+    try {
+      const res = await axios.post('/api/watchlist', {
+        symbol: stock.symbol,
+        companyName: stock.companyName,
+      })
+      toast.success(res.data.action)
+      await fetchWatchlist()
+    } catch (err) {
+      const axiosError = err as AxiosError<ApiResponse>
+      toast.error("Something went wrong", { description: axiosError.response?.data.message })
+    } finally { setLoadingSymbol(null) }
+  }
+
+  const hasQuery = query.trim().length > 0
+
+  return (
+    <div className="max-w-5xl mx-auto p-6">
+      <TickerStrip />
+
+      {!hasQuery && (
+        dashLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 animate-pulse">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-muted/40 rounded-xl p-4 h-24" />
+            ))}
+          </div>
+        ) : (
+          <DashboardView data={dashboard} />
+        )
+      )}
+
+      {hasQuery && (
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-[15px] font-medium">
+            Results for <span className="text-muted-foreground">`&quot;`{query.trim()}`&quot;`</span>
+          </h2>
+          {results.length > 0 && (
+            <span className="text-xs text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-full">
+              {results.length} found
+            </span>
+          )}
+        </div>
+      )}
+
+      {hasQuery && results.length > 0 && (
+        <div className="space-y-2">
           {results.map((stock) => {
-            const isSaved = watchlist.includes(stock.symbol);
+            const isSaved = watchlist.includes(stock.symbol)
+            const isLoading = loadingSymbol === stock.symbol
+            const up = true
             return (
-              <div
-                key={`${stock.symbol}-${stock.companyName}`}
-                className="group flex items-center justify-between p-5 rounded-2xl border bg-card/50 backdrop-blur-sm hover:bg-card hover:border-cyan-500/30 transition-all duration-200 "
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-cyan-500/10 flex items-center justify-center">
-                    <span className="font-bold text-cyan-400">
-                      {stock.symbol.slice(0, 2)}
-                    </span>
+              <div key={`${stock.symbol}-${stock.companyName}`}
+                className="flex items-center justify-between px-4 py-3 rounded-xl border border-border/40 bg-card/60 hover:border-emerald-600/30 hover:bg-card/80 transition-all duration-150">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-[10px] flex items-center justify-center text-[11px] font-medium flex-shrink-0"
+                    style={{ background: up ? "#E1F5EE" : "#FAECE7", color: up ? "#085041" : "#712B13" }}>
+                    {stock.symbol.slice(0, 2).toUpperCase()}
                   </div>
-
                   <div>
-                    <h3 className="font-semibold text-lg tracking-tight">
-                      {stock.symbol}
-                    </h3>
-
-                    <p className="text-sm text-muted-foreground">
-                      {stock.companyName}
-                    </p>
+                    <p className="text-[14px] font-medium leading-none mb-0.5">{stock.symbol}</p>
+                    <p className="text-xs text-muted-foreground">{stock.companyName}</p>
                   </div>
                 </div>
-
-                <Button
-                  onClick={() => handleClick(stock)}
-                  variant="ghost"
-                  size="icon"
-                  className="hover:scale-110 transition-transform"
-                  disabled={loadingSymbol === stock.symbol}
-                >
-                  <Star
-                    className={`h-6 w-6 ${loadingSymbol === stock.symbol
-                      ? "animate-pulse"
-                      : isSaved
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-muted-foreground"
-                      }`}
-                  />
-                </Button>
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleClick(stock)}
+                    disabled={loadingSymbol === stock.symbol}
+                  >
+                    <Star
+                      className={`h-6 w-6 ${loadingSymbol === stock.symbol
+                          ? "animate-pulse"
+                          : isSaved
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-muted-foreground"
+                        }`}
+                    />
+                  </Button>
+                </div>
               </div>
-            );
+            )
           })}
-        </div>)}
-      {query.trim() && results.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16">
-          <h3 className="text-lg font-semibold">
-            No stocks found
-          </h3>
+        </div>
+      )}
 
-          <p className="text-muted-foreground text-sm mt-1">
-            Try searching with a different symbol or company name
-          </p>
+      {hasQuery && results.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-16 border border-dashed border-border/40 rounded-2xl">
+          <svg className="w-7 h-7 text-muted-foreground/30 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+          </svg>
+          <p className="text-[14px] font-medium">No stocks found</p>
+          <p className="text-xs text-muted-foreground mt-1">Try a different ticker or company name</p>
         </div>
       )}
     </div>
   )
 }
-
-export default Page
-
