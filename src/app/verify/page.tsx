@@ -15,7 +15,7 @@ import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { toast } from "sonner"
 import { z } from "zod"
-
+export const dynamic = "force-dynamic";
 type verifyFormData = z.infer<typeof verifySchema>
 
 export default function Page() {
