@@ -1,47 +1,142 @@
-# TradeX
+# 📈 TradeX
 
-TradeX is a modern full-stack trading platform built with Next.js, TypeScript, MongoDB, and Auth.js. The project focuses on providing a secure and scalable trading experience with robust authentication, email verification, protected routes, and a responsive user interface.
+A full-stack stock portfolio management platform that helps investors track holdings, manage transactions, analyze portfolio performance, and monitor unrealized gains and losses.
 
-## Features
+### 🌐 Live Demo
 
-### Authentication & Security
+https://tradex-peach-nu.vercel.app/
 
-* User Registration
-* Email Verification via OTP
-* Secure Login with Auth.js Credentials Provider
-* Password Hashing using bcrypt
-* JWT-based Sessions
-* Protected Routes with Middleware
+---
 
-### User Experience
+## 🚀 Features
 
-* Dark & Light Theme Support
-* Responsive Design
-* Form Validation using Zod
-* Toast Notifications
-* Modern UI built with shadcn/ui
+### Authentication
 
-### Tech Stack
+* Secure authentication with NextAuth
+* Email verification workflow
+* Protected routes and session management
 
-* Next.js 15
+### Portfolio Management
+
+* Track stock holdings across multiple transactions
+* Automatic portfolio aggregation
+* Average cost basis calculation
+* Position allocation breakdown
+* Largest holding insights
+
+### Transaction Tracking
+
+* Record buy and sell transactions
+* Complete transaction history
+* Portfolio updates based on transaction activity
+
+### Market Data
+
+* Stock search functionality
+* Live market price integration
+* Current portfolio valuation
+* Unrealized profit and loss tracking
+
+### Dashboard Analytics
+
+* Total invested capital
+* Current portfolio value
+* Unrealized P&L
+* Holdings overview
+* Portfolio allocation visualization
+
+---
+
+## 🛠 Tech Stack
+
+### Frontend
+
+* Next.js
+* React
 * TypeScript
-* MongoDB
-* Mongoose
-* Auth.js (NextAuth v5)
 * Tailwind CSS
 * shadcn/ui
 * React Hook Form
 * Zod
-* Nodemailer
-* bcryptjs
 
-## Upcoming Features
+### Backend
 
-* Trading Dashboard
-* Portfolio Management
-* Watchlist System
-* Transaction History
-* Market Data Integration
-* Analytics & Performance Tracking
+* Next.js API Routes
+* MongoDB
+* Mongoose
+* NextAuth
 
-This project is being developed as a production-grade full-stack application to demonstrate modern web development practices and scalable architecture.
+### External APIs
+
+* Finnhub API
+
+---
+
+## 📊 Key Metrics
+
+TradeX automatically calculates:
+
+* Cost Basis
+* Average Purchase Price
+* Current Portfolio Value
+* Unrealized Profit & Loss
+* Portfolio Allocation %
+* Largest Position
+
+---
+
+## 🔒 Authentication Flow
+
+1. User signs up
+2. Verification code sent via email
+3. Email verification
+4. Secure login
+5. Access protected dashboard and portfolio features
+
+---
+
+## ⚙️ Local Setup
+
+```bash
+git clone https://github.com/YOUR_USERNAME/tradex.git
+cd tradex
+npm install
+```
+
+Create `.env.local`
+
+```env
+MONGODB_URI=your_mongodb_uri
+
+AUTH_SECRET=your_auth_secret
+
+NEXTAUTH_URL=http://localhost:3000
+
+FINNHUB_API_KEY=your_finnhub_api_key
+```
+
+Run locally:
+
+```bash
+npm run dev
+```
+
+---
+
+## 🎯 Future Improvements
+
+* Portfolio performance charts
+* Price alerts
+* Advanced analytics
+* Multi-market support
+* Real-time updates
+
+---
+
+## 👨‍💻 Author
+
+**Jai Verma**
+
+B.Tech ECE (IoT) — NSUT
+
+Passionate about Full Stack Development, Backend Engineering, and Building Scalable Web Applications.
