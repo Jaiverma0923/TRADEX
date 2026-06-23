@@ -5,7 +5,8 @@ import { getToken } from "next-auth/jwt";
 export async function middleware(request: NextRequest) {
     const token = await getToken({ req: request, secret: process.env.AUTH_SECRET });
     const url = request.nextUrl;
-    console.log("MIDDLEWARE HIT");
+    console.log("TOKEN:", token);
+    console.log("PATH:", request.nextUrl.pathname);
     if (
         token &&
         (
