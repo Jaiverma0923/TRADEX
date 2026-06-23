@@ -37,5 +37,6 @@ export const config = {
         '/login',
         '/signUp',
         '/verify',
+        '/'
     ],
 };
