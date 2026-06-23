@@ -11,8 +11,7 @@ export async function middleware(request: NextRequest) {
         (
             url.pathname.startsWith('/login') ||
             url.pathname.startsWith('/signUp') ||
-            url.pathname.startsWith('/verify') ||
-            url.pathname.startsWith('/') 
+            url.pathname.startsWith('/verify') 
         )
     ) {
         return NextResponse.redirect(
