@@ -3,14 +3,11 @@ import { getToken } from "next-auth/jwt";
 
 
 export async function middleware(request: NextRequest) {
-    const token = await getToken({ req: request, secret: process.env.AUTH_SECRET });
+    const token = await getToken({ req: request, secret: process.env.AUTH_SECRET,secureCookie: true, });
     const url = request.nextUrl;
-    console.log("TOKEN:", token);
-    console.log("PATH:", request.nextUrl.pathname);
     if (
         token &&
         (
-            url.pathname === '/' ||
             url.pathname.startsWith('/login') ||
             url.pathname.startsWith('/signUp') ||
             url.pathname.startsWith('/verify') 
