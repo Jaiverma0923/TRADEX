@@ -5,12 +5,10 @@ import { getToken } from "next-auth/jwt";
 export async function middleware(request: NextRequest) {
     const token = await getToken({ req: request, secret: process.env.AUTH_SECRET,secureCookie: true, });
     const url = request.nextUrl;
-    console.log(request.cookies.get("__Secure-authjs.session-token"));
-    console.log("COOKIES:", request.cookies.getAll());
-    console.log("TOKEN:", token);
     if (
         token &&
         (
+            url.pathname==='/' ||
             url.pathname.startsWith('/login') ||
             url.pathname.startsWith('/signUp') ||
             url.pathname.startsWith('/verify') 
