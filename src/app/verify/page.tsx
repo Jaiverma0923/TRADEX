@@ -99,7 +99,7 @@ function VerifyContent() {
               </p>
 
               <p className="text-[12px] text-muted-foreground/80 mt-2">
-                Didn`&apos;`t receive the email? Check your spam folder or try signing up again.
+                Didn&apos;t receive the email? Check your spam folder or try signing up again.
               </p>
             </div>
 
