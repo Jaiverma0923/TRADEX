@@ -1,5 +1,5 @@
 "use client"
-
+import { Suspense } from "react";
 import { Button } from "@/src/components/ui/button"
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/src/components/ui/field"
 import { Input } from "@/src/components/ui/input"
@@ -17,8 +17,7 @@ import { toast } from "sonner"
 import { z } from "zod"
 export const dynamic = "force-dynamic";
 type verifyFormData = z.infer<typeof verifySchema>
-
-export default function Page() {
+function VerifyContent() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const searchParams = useSearchParams()
   const email = searchParams.get("email")
@@ -150,4 +149,12 @@ export default function Page() {
       </div>
     </>
   )
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VerifyContent />
+    </Suspense>
+  );
 }
