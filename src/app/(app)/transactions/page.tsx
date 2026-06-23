@@ -16,18 +16,29 @@ type Stock = {
   companyName: string
 }
 
+type Transaction = {
+  _id: string;
+  symbol: string;
+  companyName: string;
+  quantity: number;
+  price: number;
+  type: "BUY" | "SELL";
+  createdAt: string;
+};
+
+
 type TransactionFormData = z.input<typeof TransactionSchema>
 
 export default function Page() {
   const [query, setQuery] = useState("")
-  const [searchInput,setSearchInput]=useState("")
+  const [searchInput, setSearchInput] = useState("")
   const [results, setResults] = useState<Stock[]>([])
   const [isSelected, setIsSelected] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
-  
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const debounced = useDebounceCallback(setQuery, 300)
 
   const form = useForm<TransactionFormData>({
@@ -110,6 +121,19 @@ export default function Page() {
     }
     debounced(val)
   }
+  const fetchTransactions = async () => {
+    try {
+      const response = await axios.get(
+        "/api/transaction"
+      );
+
+      setTransactions(
+        response.data.data
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const onSubmit = async (data: TransactionFormData) => {
     try {
@@ -121,6 +145,7 @@ export default function Page() {
       setIsSelected(false)
       setDropdownOpen(false)
       setSearchInput("")
+      await fetchTransactions();
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse>
       toast.error("Something went wrong", {
@@ -129,6 +154,9 @@ export default function Page() {
     }
   }
 
+  useEffect(() => {
+    fetchTransactions();
+  }, []);
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-8">
@@ -268,10 +296,109 @@ export default function Page() {
 
       {/* Recent transactions */}
       <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
-        <div className="rounded-2xl border bg-card/50 backdrop-blur-sm p-10 text-center">
-          <p className="text-muted-foreground">No transactions yet</p>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-medium">Recent transactions</h2>
+          <span className="text-xs text-muted-foreground bg-muted/60 px-3 py-1 rounded-full">
+            {transactions.length} trades
+          </span>
         </div>
+
+        {transactions.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border/40 p-10 text-center">
+            <p className="text-sm text-muted-foreground">No transactions yet</p>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-border/40 overflow-hidden">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="border-b border-border/40">
+                  {["Stock", "Type", "Qty", "Price", "Total", "Date"].map((h, i) => (
+                    <th
+                      key={h}
+                      className={`text-[11px] uppercase tracking-wider font-medium text-muted-foreground px-4 py-3 ${i >= 2 ? "text-right" : "text-left"
+                        }`}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {transactions.map((tx) => {
+                  const isBuy = tx.type === "BUY"
+                  const total = tx.quantity * tx.price
+                  const avatarColors: Record<string, string> = {
+                    A: "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300",
+                    B: "bg-blue-500/10 text-blue-800 dark:text-blue-300",
+                    C: "bg-amber-500/10 text-amber-800 dark:text-amber-300",
+                    D: "bg-pink-500/10 text-pink-800 dark:text-pink-300",
+                  }
+                  const avatarKey = Object.keys(avatarColors)[tx.symbol.charCodeAt(0) % 4]
+                  const avatarClass = isBuy
+                    ? "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300"
+                    : "bg-red-500/10 text-red-800 dark:text-red-300"
+
+                  return (
+                    <tr
+                      key={tx._id}
+                      className="border-b border-border/30 last:border-0 hover:bg-muted/30 transition-colors"
+                    >
+                      {/* Stock */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-medium flex-shrink-0 ${avatarClass}`}>
+                            {tx.symbol.slice(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-medium leading-none mb-0.5">{tx.symbol.toUpperCase()}</p>
+                            <p className="text-[11px] text-muted-foreground truncate max-w-[120px]">{tx.companyName}</p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Type */}
+                      <td className="px-4 py-3">
+                        <span
+                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md"
+                          style={{
+                            background: isBuy ? "#E1F5EE" : "#FAECE7",
+                            color: isBuy ? "#085041" : "#712B13",
+                          }}
+                        >
+                          {isBuy ? "↑" : "↓"} {isBuy ? "Buy" : "Sell"}
+                        </span>
+                      </td>
+
+                      {/* Qty */}
+                      <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                        {tx.quantity}
+                      </td>
+
+                      {/* Price */}
+                      <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                        ${tx.price.toFixed(2)}
+                      </td>
+
+                      {/* Total */}
+                      <td className="px-4 py-3 text-right tabular-nums font-medium">
+                        ${total.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      </td>
+
+                      {/* Date */}
+                      <td className="px-4 py-3 text-right text-[12px] text-muted-foreground">
+                        {new Date(tx.createdAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )

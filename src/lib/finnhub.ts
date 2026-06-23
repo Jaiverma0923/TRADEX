@@ -1,4 +1,4 @@
-const BASE_URL = "https://finnhub.io/api/v1";
+const BASE_URL = "https://www.finnhub.io/api/v1";
 const API_KEY = process.env.FINNHUB_API_KEY;
 
 export async function finnhubFetch(endpoint : string){
@@ -9,6 +9,5 @@ export async function finnhubFetch(endpoint : string){
   if (!response.ok) {
     throw new Error("Finnhub request failed");
   }
-
   return response.json();
 }

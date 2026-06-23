@@ -1,4 +1,3 @@
-
 import { finnhubFetch } from "@/src/lib/finnhub";
 import { errorResponse } from "@/src/lib/response";
 

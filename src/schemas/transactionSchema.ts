@@ -3,8 +3,7 @@ export const TransactionSchema=z.object({
     symbol: z
     .string()
     .trim()
-    .min(1, "Symbol is required")
-    .max(10, "Symbol is too long"),
+    .min(1, "Symbol is required"),
 
   companyName: z
     .string()
