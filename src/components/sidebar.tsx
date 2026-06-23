@@ -47,11 +47,11 @@ const navItems: NavItem[] = [
     href: "/transactions",
     icon: ArrowLeftRight,
   },
-  {
+  /* {
     label: "Settings",
     href: "/settings",
     icon: Settings,
-  },
+  }, */
 ]
 
 

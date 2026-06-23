@@ -64,6 +64,7 @@ export async function GET() {
                     ).toFixed(2)
                 ),
             }));
+            //promise.all allow us to run request in parallel execution instead of sequential execution
         const enrichedHoldings = await Promise.all(
             holdings.map(async (stock) => {
                 try {
@@ -91,6 +92,7 @@ export async function GET() {
                 }
             })
         );
+        
         return Response.json(
             {
                 success: true,

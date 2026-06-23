@@ -2,6 +2,7 @@ import dbConnect from "@/src/lib/dbConnect";
 import { errorResponse } from "@/src/lib/response";
 import { auth } from "../auth/[...nextauth]/option";
 import TransactionModel from "@/src/model/transaction";
+import { finnhubFetch } from "@/src/lib/finnhub";
 
 type PortfolioStock = {
     symbol: string;
@@ -65,21 +66,54 @@ export async function GET() {
             sum + stock.costBasis,
             0
         );
+        const enrichedHoldings = await Promise.all(
+            holdings.map(async (stock) => {
+                try {
+                    const quote = await finnhubFetch(
+                        `/quote?symbol=${stock.symbol.toUpperCase()}`
+                    );
+
+                    const currentPrice = quote.c;
+                    const currentValue = stock.shares * currentPrice;
+                    const unrealizedPnL = currentValue - stock.costBasis;
+
+                    return {
+                        ...stock,
+                        currentPrice,
+                        currentValue,
+                        unrealizedPnL,
+                    };
+                } catch {
+                    return {
+                        ...stock,
+                        currentPrice: null,
+                        currentValue: 0,
+                        unrealizedPnL: 0,
+                    };
+                }
+            })
+        );
         const holdingsCount = holdings.length;
         const transactionsCount = transactions.length;
-        const largestHolding = holdings.length > 0 ? holdings.reduce((max, stock) =>stock.costBasis > max.costBasis ? stock : max ) : null;
+        const largestHolding = holdings.length > 0 ? holdings.reduce((max, stock) => stock.costBasis > max.costBasis ? stock : max) : null;
+        const currentValue = enrichedHoldings.reduce((sum, stock) => sum + stock.currentValue, 0);
+        const totalPnL = enrichedHoldings.reduce((sum, stock) => sum + stock.unrealizedPnL,0);
+        const totalPnLPercent = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0;
         return Response.json(
             {
                 success: true,
                 data: {
                     totalInvested,
+                    currentValue,
+                    totalPnL,
+                    totalPnLPercent,
                     holdingsCount,
                     transactionsCount,
-                    largestHolding,
+                    largestHolding: largestHolding?.symbol ?? null
                 },
             },
             {
-                status:200
+                status: 200
             }
         );
 
