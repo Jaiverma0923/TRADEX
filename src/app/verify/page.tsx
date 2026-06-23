@@ -64,8 +64,8 @@ function VerifyContent() {
           {/* Right: form */}
           <div className="flex-1 bg-card px-8 py-6 overflow-y-auto flex flex-col justify-center">
             <div className="absolute top-4 right-4">
-                            <ThemeToggle />
-                          </div>
+              <ThemeToggle />
+            </div>
             {/* Email icon */}
             <div
               className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
@@ -83,13 +83,25 @@ function VerifyContent() {
             <h1 className="font-['Space_Grotesk',sans-serif] font-bold text-[22px] tracking-tight text-foreground mb-1">
               Check your email
             </h1>
-            <p className="text-[13px] text-muted-foreground mb-7">
-              We sent a 6-digit code to{" "}
-              {email
-                ? <span className="font-medium" style={{ color: "#00D4FF" }}>{email}</span>
-                : "your email"
-              }
-            </p>
+            <div className="mb-7">
+              <p className="text-[13px] text-muted-foreground">
+                We sent a 6-digit code to{" "}
+                {email ? (
+                  <span
+                    className="font-medium"
+                    style={{ color: "#00D4FF" }}
+                  >
+                    {email}
+                  </span>
+                ) : (
+                  "your email"
+                )}
+              </p>
+
+              <p className="text-[12px] text-muted-foreground/80 mt-2">
+                Didn`&apos;`t receive the email? Check your spam folder or try signing up again.
+              </p>
+            </div>
 
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 
