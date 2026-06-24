@@ -165,7 +165,7 @@ function MobileTabBar() {
           />
           <div className="fixed bottom-[60px] inset-x-0 z-50 md:hidden mx-3 mb-1 bg-background border border-border/40 rounded-2xl p-4 shadow-lg">
             <p className="text-sm font-medium mb-0.5">Sign out of TradeX?</p>
-            <p className="text-xs text-muted-foreground mb-4">You'll need to sign in again to access your portfolio.</p>
+            <p className="text-xs text-muted-foreground mb-4">You&apos;ll need to sign in again to access your portfolio.</p>
             <div className="flex gap-2">
               <button
                 onClick={() => signOut({ callbackUrl: "/login" })}
