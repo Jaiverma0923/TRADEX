@@ -12,6 +12,7 @@ import {
   LogOut,
   LucideIcon,
 } from "lucide-react"
+import { useState } from "react"
 
 type NavItem = {
   label: string
@@ -61,6 +62,8 @@ function NavLinks({ collapsed }: { collapsed?: boolean }) {
 }
 
 function Sidebar({ open }: SidebarProps) {
+  const [confirming, setConfirming] = useState(false)
+
   return (
     <>
       {/* Desktop sidebar */}
@@ -89,15 +92,55 @@ function Sidebar({ open }: SidebarProps) {
           <NavLinks collapsed={!open} />
         </nav>
 
-        <div className="mt-6 pt-4 border-t flex items-center gap-2">
-          <button
-            aria-label="Logout"
-            onClick={() => signOut({ callbackUrl: "/login" })}
-            className="flex items-center font-sans gap-2 px-3 py-2 rounded-lg text-[12px] font-medium transition-all duration-150 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-          >
-            <LogOut className="h-4 w-4" />
-            {open && "Logout"}
-          </button>
+        <div className="mt-6 pt-4 border-t">
+          {confirming ? (
+            open ? (
+              /* expanded: show confirm/cancel inline */
+              <div className="px-2 space-y-1.5">
+                <p className="text-[11px] text-muted-foreground px-1">Sign out?</p>
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    className="flex-1 px-2 py-1.5 rounded-lg text-[12px] font-medium bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                  >
+                    Yes
+                  </button>
+                  <button
+                    onClick={() => setConfirming(false)}
+                    className="flex-1 px-2 py-1.5 rounded-lg text-[12px] font-medium bg-muted/60 text-muted-foreground hover:bg-muted transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* collapsed: just show X to cancel, clicking logout icon confirms */
+              <div className="flex flex-col items-center gap-1">
+                <button
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                  className="p-2 rounded-lg text-red-500 bg-red-500/10 hover:bg-red-500/20 transition-colors"
+                  aria-label="Confirm logout"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setConfirming(false)}
+                  className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+            )
+          ) : (
+            <button
+              aria-label="Logout"
+              onClick={() => setConfirming(true)}
+              className="flex items-center font-sans gap-2 px-3 py-2 rounded-lg text-[12px] font-medium transition-all duration-150 text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+            >
+              <LogOut className="h-4 w-4" />
+              {open && "Logout"}
+            </button>
+          )}
         </div>
       </aside>
 
@@ -109,35 +152,66 @@ function Sidebar({ open }: SidebarProps) {
 
 function MobileTabBar() {
   const pathname = usePathname()
-  return (
-    <nav className="fixed bottom-0 inset-x-0 z-30 md:hidden bg-background border-t flex items-center justify-around px-2 py-1">
-      {navItems.map((item) => {
-        const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-        const Icon = item.icon
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              "flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl text-[10px] font-medium transition-all min-w-[56px]",
-              isActive ? "text-primary" : "text-muted-foreground"
-            )}
-          >
-            <Icon className={cn("h-5 w-5", isActive && "stroke-[2.2]")} />
-            <span>{item.label}</span>
-          </Link>
-        )
-      })}
+  const [confirming, setConfirming] = useState(false)
 
-      {/* Logout */}
-      <button
-        onClick={() => signOut({ callbackUrl: "/login" })}
-        className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl text-[10px] font-medium transition-all min-w-[56px] text-muted-foreground hover:text-red-500"
-      >
-        <LogOut className="h-5 w-5" />
-        <span>Logout</span>
-      </button>
-    </nav>
+  return (
+    <>
+      {/* Confirmation overlay — slides up from bottom */}
+      {confirming && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/30 md:hidden"
+            onClick={() => setConfirming(false)}
+          />
+          <div className="fixed bottom-[60px] inset-x-0 z-50 md:hidden mx-3 mb-1 bg-background border border-border/40 rounded-2xl p-4 shadow-lg">
+            <p className="text-sm font-medium mb-0.5">Sign out of TradeX?</p>
+            <p className="text-xs text-muted-foreground mb-4">You'll need to sign in again to access your portfolio.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => signOut({ callbackUrl: "/login" })}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+              >
+                Sign out
+              </button>
+              <button
+                onClick={() => setConfirming(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-muted text-foreground hover:bg-muted/80 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      <nav className="fixed bottom-0 inset-x-0 z-30 md:hidden bg-background border-t flex items-center justify-around px-2 py-1">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
+          const Icon = item.icon
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl text-[10px] font-medium transition-all min-w-[56px]",
+                isActive ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <Icon className={cn("h-5 w-5", isActive && "stroke-[2.2]")} />
+              <span>{item.label}</span>
+            </Link>
+          )
+        })}
+
+        <button
+          onClick={() => setConfirming(true)}
+          className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl text-[10px] font-medium transition-all min-w-[56px] text-muted-foreground hover:text-red-500"
+        >
+          <LogOut className="h-5 w-5" />
+          <span>Logout</span>
+        </button>
+      </nav>
+    </>
   )
 }
 
