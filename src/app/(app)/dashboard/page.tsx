@@ -23,36 +23,35 @@ type Dashboard = {
 }
 
 const TICKER_INDICES = [
-  { label: "S&P 500", value: "5,832", change: "+0.82%", up: true },
-  { label: "NASDAQ", value: "18,421", change: "+1.10%", up: true },
-  { label: "DOW", value: "42,110", change: "-0.14%", up: false },
-  { label: "VIX", value: "14.22", change: "-2.30%", up: false },
+  { label: "S&P 500", value: "5,832",  change: "+0.82%", up: true  },
+  { label: "NASDAQ",  value: "18,421", change: "+1.10%", up: true  },
+  { label: "DOW",     value: "42,110", change: "-0.14%", up: false },
+  { label: "VIX",     value: "14.22",  change: "-2.30%", up: false },
 ]
 
 function TickerStrip() {
   return (
-    <div className="flex items-center overflow-hidden rounded-xl border border-border/40 mb-5 bg-card/60">
+    <div className="flex items-center overflow-x-auto overflow-y-hidden rounded-xl border border-border/40 mb-4 bg-card/60 scrollbar-none">
       {TICKER_INDICES.map(({ label, value, change, up }) => (
-        <div key={label} className="flex flex-col gap-0.5 px-4 py-2.5 flex-1 border-r border-border/40 last:border-r-0">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</span>
-          <span className="text-[13px] font-medium tabular-nums">{value}</span>
-          <span className={`text-[11px] font-medium ${up ? "text-emerald-500" : "text-red-400"}`}>{change}</span>
+        <div
+          key={label}
+          className="flex flex-col gap-0.5 px-3 md:px-4 py-2.5 flex-shrink-0 md:flex-1 border-r border-border/40 last:border-r-0 min-w-[72px]"
+        >
+          <span className="text-[9px] md:text-[10px] text-muted-foreground uppercase tracking-wider whitespace-nowrap">{label}</span>
+          <span className="text-[12px] md:text-[13px] font-medium tabular-nums whitespace-nowrap">{value}</span>
+          <span className={`text-[10px] md:text-[11px] font-medium whitespace-nowrap ${up ? "text-emerald-500" : "text-red-400"}`}>{change}</span>
         </div>
       ))}
-      <div className="flex items-center gap-1.5 px-4 py-2.5 flex-shrink-0">
+      <div className="flex items-center gap-1.5 px-3 md:px-4 py-2.5 flex-shrink-0">
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />
-        <span className="text-[10px] text-muted-foreground whitespace-nowrap">NYSE open</span>
+        <span className="text-[9px] md:text-[10px] text-muted-foreground whitespace-nowrap">NYSE open</span>
       </div>
     </div>
   )
 }
 
 function MetricCard({
-  icon: Icon,
-  label,
-  value,
-  sub,
-  highlight,
+  icon: Icon, label, value, sub, highlight,
 }: {
   icon: React.ElementType
   label: string
@@ -61,17 +60,18 @@ function MetricCard({
   highlight?: "green" | "red"
 }) {
   return (
-    <div className="rounded-xl border border-border/40 bg-card/60 p-4 flex flex-col gap-2.5">
+    <div className="rounded-xl border border-border/40 bg-card/60 p-3 md:p-4 flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
-        <div className="w-7 h-7 rounded-lg bg-muted/60 flex items-center justify-center">
-          <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+        <p className="text-[9px] md:text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+        <div className="w-6 h-6 md:w-7 md:h-7 rounded-lg bg-muted/60 flex items-center justify-center">
+          <Icon className="w-3 h-3 md:w-3.5 md:h-3.5 text-muted-foreground" />
         </div>
       </div>
-      <p className={`text-xl font-medium tabular-nums ${highlight === "green" ? "text-emerald-500" :
-          highlight === "red" ? "text-red-400" : ""
-        }`}>{value}</p>
-      {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
+      <p className={`text-base md:text-xl font-medium tabular-nums leading-none ${
+        highlight === "green" ? "text-emerald-500" :
+        highlight === "red"   ? "text-red-400" : ""
+      }`}>{value}</p>
+      {sub && <p className="text-[10px] md:text-[11px] text-muted-foreground">{sub}</p>}
     </div>
   )
 }
@@ -79,63 +79,30 @@ function MetricCard({
 function DashboardView({ data }: { data: Dashboard | null }) {
   const fmt = (n: number) =>
     n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-
   const pnlUp = (data?.totalPnL ?? 0) >= 0
 
   return (
-    <div className="space-y-3">
-      {/* Row 1: Portfolio value + P&L */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-        <MetricCard
-          icon={Wallet}
-          label="Total Invested"
-          value={data ? `$${fmt(data.totalInvested)}` : "—"}
-          sub="cost basis"
-        />
-        <MetricCard
-          icon={BarChart2}
-          label="Current Value"
-          value={data ? `$${fmt(data.currentValue)}` : "—"}
-          sub="at live prices"
-        />
+    <div className="space-y-2.5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-2.5">
+        <MetricCard icon={Wallet}     label="Total Invested"    value={data ? `$${fmt(data.totalInvested)}` : "—"} sub="cost basis" />
+        <MetricCard icon={BarChart2}  label="Current Value"     value={data ? `$${fmt(data.currentValue)}` : "—"} sub="at live prices" />
         <MetricCard
           icon={pnlUp ? ArrowUpRight : ArrowDownRight}
           label="Total P&L"
-          value={
-            data
-              ? `${pnlUp ? "+" : "-"}$${fmt(Math.abs(data.totalPnL))}`
-              : "—"
-          }
+          value={data ? `${pnlUp ? "+" : "-"}$${fmt(Math.abs(data.totalPnL))}` : "—"}
           sub={data ? `${pnlUp ? "+" : ""}${data.totalPnLPercent.toFixed(2)}% all time` : undefined}
           highlight={data ? (pnlUp ? "green" : "red") : undefined}
         />
-        <MetricCard
-          icon={TrendingUp}
-          label="Largest Position"
-          value={data?.largestHolding ?? "—"}
-          sub="by cost basis"
-        />
+        <MetricCard icon={TrendingUp} label="Largest Position"  value={data?.largestHolding ?? "—"} sub="by cost basis" />
       </div>
 
-      {/* Row 2: Holdings + Transactions count */}
-      <div className="grid grid-cols-2 gap-2.5">
-        <MetricCard
-          icon={Layers}
-          label="Active Holdings"
-          value={data ? String(data.holdingsCount) : "—"}
-          sub="open positions"
-        />
-        <MetricCard
-          icon={BarChart2}
-          label="Transactions"
-          value={data ? String(data.transactionsCount) : "—"}
-          sub="total recorded"
-        />
+      <div className="grid grid-cols-2 gap-2 md:gap-2.5">
+        <MetricCard icon={Layers}    label="Active Holdings" value={data ? String(data.holdingsCount) : "—"}     sub="open positions" />
+        <MetricCard icon={BarChart2} label="Transactions"    value={data ? String(data.transactionsCount) : "—"} sub="total recorded" />
       </div>
 
-      {/* Empty state */}
       {data && data.holdingsCount === 0 && (
-        <div className="border border-dashed border-border/40 rounded-2xl p-10 text-center">
+        <div className="border border-dashed border-border/40 rounded-2xl p-8 md:p-10 text-center">
           <div className="w-10 h-10 rounded-xl bg-muted/60 flex items-center justify-center mx-auto mb-3">
             <BarChart2 className="w-5 h-5 text-muted-foreground" />
           </div>
@@ -146,7 +113,6 @@ function DashboardView({ data }: { data: Dashboard | null }) {
         </div>
       )}
 
-      {/* Hint banner */}
       <div className="flex items-start gap-3 px-4 py-3 rounded-xl border border-border/40 bg-card/20">
         <Activity className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
         <p className="text-xs text-muted-foreground leading-relaxed">
@@ -220,14 +186,14 @@ export default function Page() {
   const hasQuery = query.trim().length > 0
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
+    <div className="max-w-5xl mx-auto p-3 md:p-6">
       <TickerStrip />
 
       {!hasQuery && (
         dashLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 animate-pulse">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-2.5 animate-pulse">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-muted/40 rounded-xl p-4 h-24" />
+              <div key={i} className="bg-muted/40 rounded-xl p-4 h-20 md:h-24" />
             ))}
           </div>
         ) : (
@@ -236,9 +202,9 @@ export default function Page() {
       )}
 
       {hasQuery && (
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[15px] font-medium">
-            Results for <span className="text-muted-foreground">`&quot;`{query.trim()}`&quot;`</span>
+        <div className="flex items-center justify-between mb-3 md:mb-4">
+          <h2 className="text-[14px] md:text-[15px] font-medium">
+            Results for <span className="text-muted-foreground">&quot;{query.trim()}&quot;</span>
           </h2>
           {results.length > 0 && (
             <span className="text-xs text-muted-foreground bg-muted/60 px-2.5 py-1 rounded-full">
@@ -253,28 +219,34 @@ export default function Page() {
           {results.map((stock) => {
             const isSaved = watchlist.includes(stock.symbol)
             return (
-              <div key={`${stock.symbol}-${stock.companyName}`}
-                className="flex items-center justify-between px-4 py-3 rounded-xl border border-border/40 bg-card/60 hover:border-emerald-600/30 hover:bg-card/80 transition-all duration-150">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-[10px] flex items-center justify-center text-[11px] font-medium flex-shrink-0"
-                    style={{ background: "#E1F5EE", color: "#085041" }}>
+              <div
+                key={`${stock.symbol}-${stock.companyName}`}
+                className="flex items-center justify-between px-3 md:px-4 py-3 rounded-xl border border-border/40 bg-card/60 hover:border-emerald-600/30 hover:bg-card/80 transition-all duration-150"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className="w-8 h-8 md:w-9 md:h-9 rounded-[10px] flex items-center justify-center text-[11px] font-medium flex-shrink-0"
+                    style={{ background: "#E1F5EE", color: "#085041" }}
+                  >
                     {stock.symbol.slice(0, 2).toUpperCase()}
                   </div>
-                  <div>
-                    <p className="text-[14px] font-medium leading-none mb-0.5">{stock.symbol}</p>
-                    <p className="text-xs text-muted-foreground">{stock.companyName}</p>
+                  <div className="min-w-0">
+                    <p className="text-[13px] md:text-[14px] font-medium leading-none mb-0.5">{stock.symbol}</p>
+                    <p className="text-xs text-muted-foreground truncate max-w-[160px] md:max-w-none">{stock.companyName}</p>
                   </div>
                 </div>
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="flex-shrink-0"
                   onClick={() => handleClick(stock)}
                   disabled={loadingSymbol === stock.symbol}
                 >
-                  <Star className={`h-5 w-5 ${loadingSymbol === stock.symbol ? "animate-pulse text-muted-foreground"
-                      : isSaved ? "fill-yellow-400 text-yellow-400"
-                        : "text-muted-foreground"
-                    }`} />
+                  <Star className={`h-5 w-5 ${
+                    loadingSymbol === stock.symbol ? "animate-pulse text-muted-foreground"
+                    : isSaved ? "fill-yellow-400 text-yellow-400"
+                    : "text-muted-foreground"
+                  }`} />
                 </Button>
               </div>
             )
@@ -283,7 +255,7 @@ export default function Page() {
       )}
 
       {hasQuery && results.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 border border-dashed border-border/40 rounded-2xl">
+        <div className="flex flex-col items-center justify-center py-12 md:py-16 border border-dashed border-border/40 rounded-2xl">
           <svg className="w-7 h-7 text-muted-foreground/30 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
           </svg>
