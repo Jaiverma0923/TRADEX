@@ -21,35 +21,48 @@ export const POST = async (req: Request) => {
                 UserModel.findOne({ email }),
                 UserModel.findOne({ phoneNumber }),
             ]);
+
+        if (existingUserByEmail?.isVerified || existingUserByPhoneNo?.isVerified) {
+            return errorResponse("Email or Phone number already in use", 409)
+        }
+        
+        if (existingUserByEmail && existingUserByPhoneNo && existingUserByEmail._id.toString() != existingUserByPhoneNo._id.toString()) {
+            return errorResponse(
+                "Email and phone number belong to different pending accounts. Please use the original details or wait for account cleanup.",
+                409
+            );
+        }
         const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
         const verifyCodeExpiry = new Date(Date.now() + 10 * 60 * 1000);
+        const hashedPassword = await bcrypt.hash(password, 10);
         if (existingUserByEmail) {
-            if (existingUserByEmail.isVerified) {
-                return errorResponse("email already exist", 409);
+            existingUserByEmail.name = name;
+            existingUserByEmail.password = hashedPassword;
+            existingUserByEmail.phoneNumber = phoneNumber;
+            existingUserByEmail.verifyCode = verifyCode;
+            existingUserByEmail.verifyCodeExpiry = verifyCodeExpiry;
+            await existingUserByEmail.save();
+            const emailResponse = await sendVerificationEmail(email, name, verifyCode);
+            if (!emailResponse.success) {
+                return errorResponse("Failed to send verification email", 500);
             }
-            if (existingUserByEmail.phoneNumber !== phoneNumber) {
-                return errorResponse(
-                    "Phone number does not match account",
-                    400
-                );
-            }
-            else {
+            return successResponse("User Updated Successfully", 200)
 
-                existingUserByEmail.verifyCode = verifyCode
-                existingUserByEmail.verifyCodeExpiry = verifyCodeExpiry;
-                await existingUserByEmail.save();
-                const emailResponse = await sendVerificationEmail( email, name, verifyCode );
-                if (!emailResponse.success) {
-                    return errorResponse("Failed to send verification email",500);
-                }
-                return successResponse("Verification code updated", 200)
-            }
         }
         if (existingUserByPhoneNo) {
-            return errorResponse("phone number already exist", 409);
+            existingUserByPhoneNo.name = name;
+            existingUserByPhoneNo.password = hashedPassword;
+            existingUserByPhoneNo.email = email;
+            existingUserByPhoneNo.verifyCode = verifyCode;
+            existingUserByPhoneNo.verifyCodeExpiry = verifyCodeExpiry;
+            await existingUserByPhoneNo.save();
+            const emailResponse = await sendVerificationEmail(email, name, verifyCode);
+            if (!emailResponse.success) {
+                return errorResponse("Failed to send verification email", 500);
+            }
+            return successResponse("User Updated Successfully", 200)
         }
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user=await UserModel.create({
+        const user = await UserModel.create({
             name,
             email,
             password: hashedPassword,
@@ -57,11 +70,10 @@ export const POST = async (req: Request) => {
             verifyCode,
             verifyCodeExpiry
         })
-        const emailResponse = await sendVerificationEmail( email, name, verifyCode );
-        console.log(emailResponse);
+        const emailResponse = await sendVerificationEmail(email, name, verifyCode);
         if (!emailResponse.success) {
-            await UserModel.deleteOne({_id:user._id});
-            return errorResponse("Failed to send verification email",500);
+            await UserModel.deleteOne({ _id: user._id });
+            return errorResponse("Failed to send verification email", 500);
         }
         return successResponse("User Created Successfully")
     } catch (error) {
