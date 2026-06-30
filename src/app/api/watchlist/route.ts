@@ -2,6 +2,7 @@ import dbConnect from "@/src/lib/dbConnect";
 import { errorResponse } from "@/src/lib/response";
 import { auth } from "../auth/[...nextauth]/option";
 import WatchlistModel from "@/src/model/watchlist";
+import { getStockQuote } from "@/src/lib/getStockQuote";
 
 export async function POST(req: Request) {
     await dbConnect();
@@ -11,7 +12,7 @@ export async function POST(req: Request) {
             return errorResponse("Unauthorized", 401)
         }
         const body = await req.json();
-        
+
 
         const {
             symbol,
@@ -75,13 +76,25 @@ export async function GET() {
             )
             .sort({ createdAt: -1 })
             .lean();
+
+        const enrichedStocks = await Promise.all(
+            stocks.map(async (stock) => {
+                const quote = await getStockQuote(stock.symbol);
+
+                return {
+                    ...stock,
+                    ...quote,
+                };
+            })
+        );
+
         return Response.json(
             {
                 success: true,
-                data: stocks
+                data: enrichedStocks,
             },
             {
-                status: 201
+                status: 200,
             }
         );
 

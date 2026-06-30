@@ -1,0 +1,10 @@
+export interface StockQuote {
+  currentPrice: number | null;
+  change: number | null;
+  percentChange: number | null;
+
+  high: number | null;
+  low: number | null;
+  open: number | null;
+  previousClose: number | null;
+}

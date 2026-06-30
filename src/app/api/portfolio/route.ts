@@ -3,6 +3,7 @@ import TransactionModel from "@/src/model/transaction";
 import { auth } from "../auth/[...nextauth]/option";
 import { errorResponse } from "@/src/lib/response";
 import { finnhubFetch } from "@/src/lib/finnhub";
+import { getStockQuote } from "@/src/lib/getStockQuote";
 
 type PortfolioStock = {
     symbol: string;
@@ -64,39 +65,90 @@ export async function GET() {
                     ).toFixed(2)
                 ),
             }));
-            //promise.all allow us to run request in parallel execution instead of sequential execution
+        //promise.all allow us to run request in parallel execution instead of sequential execution
         const enrichedHoldings = await Promise.all(
             holdings.map(async (stock) => {
-                try {
-                    const quote = await finnhubFetch(`/quote?symbol=${stock.symbol.toUpperCase()}`);
-                    const currentPrice = quote.c;
-                    const currentValue = stock.shares * currentPrice;
-                    const unrealizedPnL = currentValue - stock.costBasis;
-                    const unrealizedPnLPercent = stock.costBasis > 0 ? (unrealizedPnL / stock.costBasis) * 100 : 0;
+                const quote = await getStockQuote(stock.symbol);
 
-                    return {
-                        ...stock,
-                        currentPrice,
-                        currentValue,
-                        unrealizedPnL,
-                        unrealizedPnLPercent,
-                    };
-                } catch {
-                    return {
-                        ...stock,
-                        currentPrice: null,
-                        currentValue: null,
-                        unrealizedPnL: null,
-                        unrealizedPnLPercent: null,
-                    };
-                }
+                const currentPrice = quote.currentPrice;
+
+                const currentValue =
+                    currentPrice !== null
+                        ? stock.shares * currentPrice
+                        : null;
+
+                const unrealizedPnL =
+                    currentValue !== null
+                        ? currentValue - stock.costBasis
+                        : null;
+
+                const unrealizedPnLPercent =
+                    unrealizedPnL !== null && stock.costBasis > 0
+                        ? (unrealizedPnL / stock.costBasis) * 100
+                        : null;
+
+                return {
+                    ...stock,
+                    ...quote,
+                    currentValue,
+                    unrealizedPnL,
+                    unrealizedPnLPercent,
+                };
             })
         );
-        
+        const totalInvested = enrichedHoldings.reduce(
+            (sum, stock) => sum + stock.costBasis,
+            0
+        );
+
+        const totalCurrentValue = enrichedHoldings.reduce(
+            (sum, stock) => sum + (stock.currentValue || 0),
+            0
+        );
+
+        const totalPnL = totalCurrentValue - totalInvested;
+
+        const totalPnLPercent = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0;
+
+        const validHoldings = enrichedHoldings.filter(
+            (
+                stock
+            ): stock is typeof stock & { unrealizedPnLPercent: number } =>
+                stock.unrealizedPnLPercent !== null
+        );
+
+        const bestPerformer =
+            validHoldings.length > 0
+                ? validHoldings.reduce((best, current) =>
+                    current.unrealizedPnLPercent >
+                        best.unrealizedPnLPercent
+                        ? current
+                        : best
+                )
+                : null;
+
+        const worstPerformer =
+            validHoldings.length > 0
+                ? validHoldings.reduce((worst, current) =>
+                    current.unrealizedPnLPercent <
+                        worst.unrealizedPnLPercent
+                        ? current
+                        : worst
+                )
+                : null;
+
         return Response.json(
             {
                 success: true,
-                data: enrichedHoldings
+                data: enrichedHoldings,
+                summary: {
+                    totalInvested,
+                    totalCurrentValue,
+                    totalPnL,
+                    totalPnLPercent,
+                    bestPerformer,
+                    worstPerformer,
+                },
             },
             {
                 status: 200

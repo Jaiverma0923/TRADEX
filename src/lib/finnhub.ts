@@ -7,6 +7,7 @@ export async function finnhubFetch(endpoint : string){
   );
 
   if (!response.ok) {
+    console.log(response);
     throw new Error("Finnhub request failed");
   }
   return response.json();

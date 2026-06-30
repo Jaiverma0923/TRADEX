@@ -15,12 +15,27 @@ type Holding = {
   unrealizedPnLPercent: number | null
 }
 
+type Performer = {
+  symbol: string
+  companyName: string
+  unrealizedPnLPercent: number
+}
+
+type Summary = {
+  totalInvested: number
+  totalCurrentValue: number
+  totalPnL: number
+  totalPnLPercent: number
+  bestPerformer: Performer | null
+  worstPerformer: Performer | null
+}
+
 const AVATAR_COLORS = [
   { bg: "bg-emerald-500/10", text: "text-emerald-800 dark:text-emerald-300", bar: "#1D9E75" },
-  { bg: "bg-blue-500/10",    text: "text-blue-800 dark:text-blue-300",    bar: "#378ADD" },
-  { bg: "bg-amber-500/10",   text: "text-amber-800 dark:text-amber-300",   bar: "#EF9F27" },
-  { bg: "bg-pink-500/10",    text: "text-pink-800 dark:text-pink-300",    bar: "#D4537E" },
-  { bg: "bg-violet-500/10",  text: "text-violet-800 dark:text-violet-300",  bar: "#7F77DD" },
+  { bg: "bg-blue-500/10",    text: "text-blue-800 dark:text-blue-300",       bar: "#378ADD" },
+  { bg: "bg-amber-500/10",   text: "text-amber-800 dark:text-amber-300",     bar: "#EF9F27" },
+  { bg: "bg-pink-500/10",    text: "text-pink-800 dark:text-pink-300",       bar: "#D4537E" },
+  { bg: "bg-violet-500/10",  text: "text-violet-800 dark:text-violet-300",   bar: "#7F77DD" },
 ]
 
 const getColor = (symbol: string) =>
@@ -70,6 +85,7 @@ function SkeletonCard() {
 
 export default function Page() {
   const [holdings, setHoldings] = useState<Holding[]>([])
+  const [summary, setSummary] = useState<Summary | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -78,6 +94,7 @@ export default function Page() {
         setIsLoading(true)
         const response = await axios.get("/api/portfolio")
         setHoldings(response.data.data)
+        setSummary(response.data.summary)
       } finally {
         setIsLoading(false)
       }
@@ -85,13 +102,29 @@ export default function Page() {
     fetchPortfolio()
   }, [])
 
-  const totalInvested = holdings.reduce((s, h) => s + h.costBasis, 0)
-  const totalValue    = holdings.reduce((s, h) => s + (h.currentValue ?? 0), 0)
-  const totalPnL      = holdings.reduce((s, h) => s + (h.unrealizedPnL ?? 0), 0)
-  const totalPnLPct   = totalInvested > 0 ? (totalPnL / totalInvested) * 100 : 0
-  const largest       = holdings.length > 0 ? holdings.reduce((m, h) => h.costBasis > m.costBasis ? h : m) : null
-  const largestWeight = largest && totalInvested > 0 ? ((largest.costBasis / totalInvested) * 100).toFixed(0) : "0"
+  const totalInvested = summary?.totalInvested ?? holdings.reduce((s, h) => s + h.costBasis, 0)
+  const totalValue    = summary?.totalCurrentValue ?? holdings.reduce((s, h) => s + (h.currentValue ?? 0), 0)
+  const totalPnL      = summary?.totalPnL ?? 0
+  const totalPnLPct   = summary?.totalPnLPercent ?? 0
   const isPnLUp       = totalPnL >= 0
+
+  // ✅ Fix 2: largest by current value, not cost basis
+  const largest = holdings.length > 0
+    ? holdings.reduce((m, h) => (h.currentValue ?? 0) > (m.currentValue ?? 0) ? h : m)
+    : null
+
+  // ✅ Fix 1: largest weight by current value
+  const largestWeight = largest && totalValue > 0
+    ? (((largest.currentValue ?? 0) / totalValue) * 100).toFixed(0)
+    : "0"
+
+  const getWeight = (value: number | null) =>
+  totalValue > 0
+    ? (((value ?? 0) / totalValue) * 100).toFixed(0)
+    : "0";
+
+  const best  = summary?.bestPerformer
+  const worst = summary?.worstPerformer
 
   return (
     <div className="max-w-5xl mx-auto p-3 md:p-6 space-y-3 md:space-y-4">
@@ -109,7 +142,7 @@ export default function Page() {
         )}
       </div>
 
-      {/* Metrics */}
+      {/* ✅ Fix 3: 4 metric cards — replaced Largest Position with Portfolio Return */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
         <div className="bg-muted/40 rounded-xl p-3 md:p-3.5">
           <p className="text-[9px] md:text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Current value</p>
@@ -117,7 +150,7 @@ export default function Page() {
             {isLoading ? "—" : `$${fmt(totalValue)}`}
           </p>
           <p className={`text-[10px] md:text-[11px] mt-1 ${isPnLUp ? "text-emerald-500" : "text-red-400"}`}>
-            {isLoading ? "" : `${isPnLUp ? "↑" : "↓"} $${fmt(Math.abs(totalPnL))} gain`}
+            {isLoading ? "" : `${isPnLUp ? "↑" : "↓"} $${fmt(Math.abs(totalPnL))}`}
           </p>
         </div>
 
@@ -139,19 +172,73 @@ export default function Page() {
           </p>
         </div>
 
+        {/* ✅ Fix 3: Portfolio Return replaces Largest Position here */}
         <div className="bg-muted/40 rounded-xl p-3 md:p-3.5">
-          <p className="text-[9px] md:text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Largest position</p>
-          <p className="text-base md:text-lg font-medium tabular-nums">
-            {isLoading ? "—" : largest?.symbol.toUpperCase() ?? "—"}
+          <p className="text-[9px] md:text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">Portfolio return</p>
+          <p className={`text-base md:text-lg font-medium tabular-nums ${isPnLUp ? "text-emerald-500" : "text-red-400"}`}>
+            {isLoading ? "—" : `${isPnLUp ? "+" : ""}${totalPnLPct.toFixed(2)}%`}
           </p>
           <p className="text-[10px] md:text-[11px] text-muted-foreground mt-1">
-            {isLoading ? "" : `${largestWeight}% of portfolio`}
+            {isLoading ? "" : "since first buy"}
           </p>
         </div>
       </div>
 
-      {/* Allocation bar */}
-      {!isLoading && holdings.length > 0 && (
+      {/* Best / Worst + Largest Position row */}
+      {!isLoading && (best || worst || largest) && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-3">
+          {best && (
+            <div className="bg-muted/40 rounded-xl p-3 md:p-3.5 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+                  <polyline points="17 6 23 6 23 12" />
+                </svg>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[9px] md:text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Best performer</p>
+                <p className="text-base font-medium leading-none mb-0.5">{best.symbol.toUpperCase()}</p>
+                <p className="text-[11px] text-emerald-500">+{best.unrealizedPnLPercent.toFixed(2)}%</p>
+              </div>
+            </div>
+          )}
+          {worst && (
+            <div className="bg-muted/40 rounded-xl p-3 md:p-3.5 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+                  <polyline points="17 18 23 18 23 12" />
+                </svg>
+              </div>
+              <div className="min-w-0">
+                <p className="text-[9px] md:text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Worst performer</p>
+                <p className="text-base font-medium leading-none mb-0.5">{worst.symbol.toUpperCase()}</p>
+                <p className={`text-[11px] ${worst.unrealizedPnLPercent < 0 ? "text-red-400" : "text-emerald-500"}`}>
+                  {worst.unrealizedPnLPercent >= 0 ? "+" : ""}{worst.unrealizedPnLPercent.toFixed(2)}%
+                </p>
+              </div>
+            </div>
+          )}
+          {/* ✅ Fix 3: Largest Position moved here, smaller */}
+          {largest && (
+            <div className="bg-muted/40 rounded-xl p-3 md:p-3.5 flex items-center gap-3">
+              <div
+                className={`w-9 h-9 rounded-lg flex items-center justify-center text-[11px] font-medium flex-shrink-0 ${getColor(largest.symbol).bg} ${getColor(largest.symbol).text}`}
+              >
+                {largest.symbol.slice(0, 2).toUpperCase()}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[9px] md:text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Largest position</p>
+                <p className="text-base font-medium leading-none mb-0.5">{largest.symbol.toUpperCase()}</p>
+                <p className="text-[11px] text-muted-foreground">{largestWeight}% of portfolio</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ✅ Fix 1: Allocation bar uses current value */}
+      {!isLoading && holdings.length > 0 && totalValue > 0 && (
         <div className="bg-muted/40 rounded-xl p-3 md:p-3.5">
           <p className="text-[9px] md:text-[10px] uppercase tracking-wider text-muted-foreground mb-3">Allocation</p>
           <div className="flex h-1.5 rounded-full overflow-hidden gap-[2px]">
@@ -159,7 +246,7 @@ export default function Page() {
               <div
                 key={h.symbol}
                 style={{
-                  width: `${((h.costBasis / totalInvested) * 100).toFixed(1)}%`,
+                  width: `${(((h.currentValue ?? 0) / totalValue) * 100).toFixed(1)}%`,
                   background: getColor(h.symbol).bar,
                 }}
               />
@@ -167,7 +254,7 @@ export default function Page() {
           </div>
           <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
             {holdings.map((h) => {
-              const w = ((h.costBasis / totalInvested) * 100).toFixed(0)
+              const w = (((h.currentValue ?? 0) / totalValue) * 100).toFixed(0)
               return (
                 <div key={h.symbol} className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: getColor(h.symbol).bar }} />
@@ -189,7 +276,8 @@ export default function Page() {
               : holdings.map((h) => {
                 const avatarColor = getColor(h.symbol)
                 const pnlUp = h.unrealizedPnL != null && h.unrealizedPnL >= 0
-                const weight = totalInvested > 0 ? ((h.costBasis / totalInvested) * 100).toFixed(0) : "0"
+                // ✅ Fix 1: weight by current value
+                const weight = totalValue > 0 ? (((h.currentValue ?? 0) / totalValue) * 100).toFixed(0) : "0"
                 return (
                   <div key={h.symbol} className="rounded-xl border border-border/40 bg-card/60 px-4 py-3">
                     <div className="flex items-center justify-between">
@@ -247,7 +335,8 @@ export default function Page() {
                 {isLoading
                   ? [...Array(4)].map((_, i) => <SkeletonRow key={i} />)
                   : holdings.map((h) => {
-                    const weight = totalInvested > 0 ? ((h.costBasis / totalInvested) * 100).toFixed(0) : "0"
+                    // ✅ Fix 1: weight by current value
+                    const weight = totalValue > 0 ? (((h.currentValue ?? 0) / totalValue) * 100).toFixed(0) : "0"
                     const avatarColor = getColor(h.symbol)
                     const pnlUp = h.unrealizedPnL != null && h.unrealizedPnL >= 0
                     return (
